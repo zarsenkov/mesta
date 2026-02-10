@@ -1,39 +1,35 @@
-import React, { useState, useMemo } from 'react';
-// Импортируем данные (создадим этот файл отдельно)
+import React, { useState } from 'react';
 import { cardsData } from './data';
 
-// --- КОМПОНЕНТ КАРТОЧКИ ---
-// Отвечает за отрисовку одной карточки с её уникальным поворотом
-const Card = ({ card, index }) => {
-  // Генерируем случайный наклон один раз при отрисовке
-  const rotation = useMemo(() => (Math.random() * 4 - 2).toFixed(1), []);
-
+// --- КОМПОНЕНТ ОДИНОЧНОЙ КАРТОЧКИ ---
+// Используем функцию для генерации случайного наклона
+const CityCard = ({ item, index }) => {
+  const rotation = (Math.random() * 4 - 2).toFixed(1) + 'deg';
+  
   return (
-    <div className="card" style={{ '--r': `${rotation}deg` }}>
+    <div className="card" style={{ '--r': rotation }}>
       <div className="card-meta">
-        <span>{card.city.toUpperCase()} // {card.category.toUpperCase()}</span>
+        <span>{item.city.toUpperCase()} // {item.category.toUpperCase()}</span>
         <span>ID:{1000 + index}</span>
       </div>
-      <h3>{card.title}</h3>
-      <p>{card.desc}</p>
-      
+      <h3>{item.title}</h3>
+      <p>{item.desc}</p>
       <div className="card-address">
-        <strong>LOC:</strong> {card.address || 'Адрес уточняется'}
+        <strong>LOC:</strong> {item.address}
       </div>
-
       <div className="hint-box">
-        "Заметка: {card.hint}"
+        "Заметка: {item.hint}"
       </div>
     </div>
   );
 };
 
 export default function App() {
-  const [city, setCity] = useState('all'); // Состояние выбранного города
-  const [category, setCategory] = useState('all'); // Состояние категории
+  const [activeCity, setActiveCity] = useState('all'); // Стейт для города
+  const [activeCat, setActiveCat] = useState('all');   // Стейт для категории
 
-  // Словарь заголовков для городов
-  const cityNames = {
+  // Словарь для заголовков
+  const cityTitles = {
     all: <>РОССИЯ<span>ПУТЕВОДИТЕЛЬ</span></>,
     msk: <>МОСКВА<span>ДЕФОЛТ-СИТИ</span></>,
     spb: <>ПИТЕР<span>КУЛЬТУРНО</span></>,
@@ -42,11 +38,11 @@ export default function App() {
     kazan: <>КАЗАНЬ<span>ТРЕТЬЯ СТОЛИЦА</span></>
   };
 
-  // --- ФИЛЬТРАЦИЯ ДАННЫХ ---
-  // Фильтруем массив в зависимости от выбранных значений
-  const filteredCards = cardsData.filter(item => {
-    const cityMatch = city === 'all' || item.city === city;
-    const catMatch = category === 'all' || item.category === category;
+  // --- ЛОГИКА ФИЛЬТРАЦИИ ---
+  // Оставляем только те карточки, которые подходят под фильтры
+  const filteredCards = cardsData.filter(card => {
+    const cityMatch = activeCity === 'all' || card.city === activeCity;
+    const catMatch = activeCat === 'all' || card.category === activeCat;
     return cityMatch && catMatch;
   });
 
@@ -54,19 +50,20 @@ export default function App() {
     <div className="app-container">
       <div className="paper-overlay"></div>
       
-      {/* КНОПКА НАЗАД */}
       <div className="back-nav">
-        <a href="https://lovecouple.ru/" className="back-btn">
-          <span className="arrow">←</span> НАЗАД
-        </a>
+        <a href="https://lovecouple.ru/" className="back-btn">← НАЗАД</a>
       </div>
 
       <header>
         <div className="logo">РФ<span>АРХИВ</span></div>
         <div className="city-nav">
           <div className="city-badge">
-            <span className="label">LOCATION:</span>
-            <select value={city} onChange={(e) => setCity(e.target.value)} id="city-selector">
+            <span style={{fontSize: '0.6rem', fontWeight: 900, color: '#ff0033'}}>LOCATION:</span>
+            <select 
+              id="city-selector" 
+              value={activeCity} 
+              onChange={(e) => setActiveCity(e.target.value)}
+            >
               <option value="all">ВСЯ РОССИЯ</option>
               <option value="msk">МОСКВА</option>
               <option value="spb">ПИТЕР</option>
@@ -80,27 +77,30 @@ export default function App() {
 
       <main>
         <section className="hero">
-          <h1 id="city-title">{cityNames[city] || cityNames.all}</h1>
+          <h1>{cityTitles[activeCity] || cityTitles.all}</h1>
           <div className="stamp">КОПИЯ ВЕРНА</div>
         </section>
 
-        {/* ПЕРЕКЛЮЧАТЕЛИ КАТЕГОРИЙ */}
         <nav className="categories">
-          {['all', 'bar', 'place', 'event'].map(cat => (
+          {[
+            { id: 'all', label: 'ВСЁ СРАЗУ' },
+            { id: 'bar', label: 'ВЫПИТЬ' },
+            { id: 'place', label: 'ГЛЯНУТЬ' },
+            { id: 'event', label: 'ДВИЖ' }
+          ].map(cat => (
             <button 
-              key={cat}
-              className={`filter-btn ${category === cat ? 'active' : ''}`}
-              onClick={() => setCategory(cat)}
+              key={cat.id}
+              className={`filter-btn ${activeCat === cat.id ? 'active' : ''}`}
+              onClick={() => setActiveCat(cat.id)}
             >
-              {cat === 'all' ? 'ВСЁ СРАЗУ' : cat === 'bar' ? 'ВЫПИТЬ' : cat === 'place' ? 'ГЛЯНУТЬ' : 'ДВИЖ'}
+              {cat.label}
             </button>
           ))}
         </nav>
 
-        {/* СЕТКА КАРТОЧЕК */}
         <div className="zine-grid">
-          {filteredCards.map((card, index) => (
-            <Card key={index} card={card} index={index} />
+          {filteredCards.map((item, index) => (
+            <CityCard key={index} item={item} index={index} />
           ))}
         </div>
       </main>
